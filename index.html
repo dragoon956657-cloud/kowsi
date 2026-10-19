@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#170b29">
+<title>Maha's Love Chase 💗</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#fff0f7;font-family:system-ui,Arial,sans-serif;background:radial-gradient(ellipse at top,#57234f,#1a0c2b 65%);min-height:100vh}
+.wrap{width:min(920px,94%);margin:auto;padding:22px 0 45px}header{text-align:center;padding:14px 8px 22px}
+.kicker{font-size:.73rem;letter-spacing:.2em;text-transform:uppercase;color:#ffafd0}
+h1{font:clamp(2.5rem,8vw,5rem)/1 Georgia,serif;margin:13px 0;color:#fff}h1 em{color:#ff80b5}
+header p{max-width:600px;margin:12px auto;color:#eac8dc;line-height:1.7}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(230px,.65fr);gap:16px}
+.panel{border:1px solid #ff91bd66;background:#ffffff09;border-radius:23px;padding:15px;box-shadow:0 20px 60px #0003}
+.hud{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#ffd2e4;font-size:.9rem;padding:0 2px 12px}
+canvas{width:100%;display:block;border-radius:16px;background:#1b1236;touch-action:manipulation}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:13px 0 3px}
+button{border:0;border-radius:999px;padding:11px 16px;font-weight:750;cursor:pointer}
+.primary{background:linear-gradient(135deg,#ffa1c8,#ff4c93);color:#43102d}.secondary{background:#ffffff0b;border:1px solid #e6a9c7;color:#ffe7f1}
+.photo-card{text-align:center}.photo-card h2{font:normal 1.8rem Georgia,serif;color:#ffb6d4;margin:5px 0 12px}
+.photo-frame{border:2px solid #ff8dbb;padding:6px;border-radius:20px;box-shadow:0 0 35px #ff4c9340;max-width:300px;margin:auto}
+.photo-frame img{display:block;width:100%;max-height:400px;object-fit:cover;object-position:center 25%;border-radius:14px}
+.caption{color:#eac8dc;font-size:.9rem;line-height:1.65;margin:12px 0}
+.tips{margin-top:15px;color:#eac8dc;font-size:.87rem;line-height:1.8}.tips b{color:#ffb3d2}
+.note{text-align:center;color:#d7b4cc;font-size:.83rem;line-height:1.6}
+.overlay{position:fixed;inset:0;background:#100819ed;z-index:10;display:none;align-items:center;justify-content:center;padding:18px}.overlay.show{display:flex}
+.modal{width:min(440px,100%);text-align:center;padding:28px 22px;border:1px solid #ff91bd88;border-radius:25px;background:linear-gradient(145deg,#4a1b4e,#1a102e);box-shadow:0 20px 90px #ff5d9e20}
+.modal .emoji{font-size:3.4rem}.modal h2{font:normal 2.2rem Georgia,serif;color:#ffb0d0;margin:9px 0}.modal p{color:#f5d7e7;line-height:1.75}
+#msg{min-height:24px;color:#ffc3dc}
+@media(max-width:680px){.layout{grid-template-columns:1fr}.photo-card{order:-1}.photo-frame{max-width:230px}.photo-frame img{max-height:300px}.panel{padding:10px}}
+</style></head>
+<body><div class="wrap">
+<header><div class="kicker">A little game made just for you</div><h1>Love <em>Chase</em> 💗</h1>
+<p>Maha oda special love game! Hearts collect panni, obstacles avoid panni, avala reach pannu. Finish line-la oru chinna surprise waiting… 🌹</p></header>
+<div class="layout">
+<section class="panel">
+<div class="hud"><span>💗 Hearts: <b id="score">0</b></span><span>🏁 <b id="status">Ready?</b></span></div>
+<canvas id="game" width="620" height="390" aria-label="Love chase game"></canvas>
+<div class="controls"><button class="primary" id="start">▶ Start Game</button><button class="secondary" id="left">← Left</button><button class="secondary" id="right">Right →</button><button class="secondary" id="jump">↑ Jump</button></div>
+<p class="note">Keyboard: ← → move, ↑ / Space jump. Phone-la buttons use pannu da! 💞</p>
+</section>
+<aside class="panel photo-card"><h2>Your special person 🌷</h2><div class="photo-frame"><img src="her-photo.png" alt="Your special person's photo"></div>
+<p class="caption">“Indha game-la destination aval dhaan… en heart-um aval kitta dhaan.” 💗</p>
+<div class="tips"><b>How to play</b><br>1. Collect 💗 hearts<br>2. Jump over purple obstacles<br>3. Reach her photo to unlock the proposal</div>
+</aside>
+</div></div>
+<div class="overlay" id="overlay"><div class="modal"><div class="emoji" id="emoji">🌹</div><h2 id="title">You made it!</h2><p id="text"></p><div class="controls" id="actions"></div><p id="msg"></p></div></div>
+<script>
+const c=document.getElementById('game'),x=c.getContext('2d'),W=620,H=390,ground=315;
+let running=false,done=false,score=0,items=[],sparks=[],last=0,keys={};
+const boy={x:55,y:ground-48,w:30,h:48,vy:0,jump:false},goal={x:540,y:ground-56,w:40,h:56};
+function heart(px,py,s,col){x.save();x.translate(px,py);x.scale(s/24,s/24);x.fillStyle=col;x.beginPath();x.moveTo(0,8);x.bezierCurveTo(-24,-7,-10,-22,0,-10);x.bezierCurveTo(10,-22,24,-7,0,8);x.fill();x.restore()}
+function person(p,girl=false){x.save();x.translate(p.x,p.y);x.fillStyle='#0a061a77';x.beginPath();x.ellipse(p.w/2,p.h+3,22,4,0,0,7);x.fill();x.strokeStyle=girl?'#ffacd0':'#9be0ff';x.lineWidth=5;x.lineCap='round';x.beginPath();x.moveTo(10,p.h-13);x.lineTo(8,p.h);x.moveTo(21,p.h-13);x.lineTo(24,p.h);x.stroke();x.fillStyle=girl?'#ff5fa2':'#62caff';x.beginPath();x.roundRect(4,17,23,22,7);x.fill();x.fillStyle='#efc4a7';x.beginPath();x.arc(15,10,10,0,7);x.fill();x.fillStyle='#2a142f';x.beginPath();x.arc(15,8,10,3.1,6.3);x.fill();if(girl){x.beginPath();x.ellipse(23,17,4,12,.2,0,7);x.fill();heart(15,-7,13,'#ff79b2')}x.strokeStyle='#6e3046';x.lineWidth=1.4;x.beginPath();x.arc(15,12,3,.2,2.9);x.stroke();x.restore()}
+function bg(){let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1b1641');g.addColorStop(.7,'#57234f');g.addColorStop(1,'#1a0d2c');x.fillStyle=g;x.fillRect(0,0,W,H);x.fillStyle='#ffe7bc';x.beginPath();x.arc(520,54,19,0,7);x.fill();x.fillStyle='#1b1641';x.beginPath();x.arc(528,48,17,0,7);x.fill();for(let i=0;i<35;i++){x.fillStyle=`rgba(255,230,248,${.25+(i%4)*.15})`;x.fillRect((i*83+21)%W,(i*47+15)%230,2,2)}x.fillStyle='#32163f';x.beginPath();x.moveTo(0,280);for(let a=0;a<=W;a+=50)x.lineTo(a,258+Math.sin(a*.025)*19);x.lineTo(W,H);x.lineTo(0,H);x.fill();x.fillStyle='#1c102d';x.fillRect(0,ground,W,H-ground);x.strokeStyle='#ff88bb';x.lineWidth=2;x.beginPath();x.moveTo(0,ground);x.lineTo(W,ground);x.stroke();x.fillStyle='#ffb9d5';x.font='bold 14px system-ui';x.fillText('HER ❤️',goal.x-8,ground-76)}
+function draw(){bg();items.forEach(i=>i.t==='h'?heart(i.x,i.y,23,'#ff70b1'):(x.fillStyle='#b48aff',x.beginPath(),x.moveTo(i.x,i.y+20),x.lineTo(i.x+12,i.y-3),x.lineTo(i.x+25,i.y+20),x.fill()));sparks.forEach(s=>{x.globalAlpha=s.life/20;x.fillStyle='#ffd8e9';x.fillRect(s.x,s.y,4,4);x.globalAlpha=1});person(boy);person(goal,true);if(!running&&!done){x.fillStyle='#fff0f7';x.textAlign='center';x.font='bold 21px Georgia';x.fillText('Follow your heart 💗',310,110);x.font='14px system-ui';x.fillText('Press START to begin',310,137);x.textAlign='left'}}
+function start(){score=0;document.getElementById('score').textContent=score;document.getElementById('status').textContent='Go!';boy.x=55;boy.y=ground-boy.h;boy.vy=0;boy.jump=false;goal.x=540;items=[];sparks=[];running=true;done=false;document.getElementById('overlay').classList.remove('show')}
+function jump(){if(running&&!boy.jump){boy.vy=-11;boy.jump=true}}
+function finish(){running=false;done=true;document.getElementById('status').textContent='Complete!';document.getElementById('emoji').textContent='💗';document.getElementById('title').textContent='You reached her!';document.getElementById('text').textContent=`Nee ${score} hearts collect pannirukka da! Ippo game oda special question… avalukku un feelings solla ready-ah?`;let a=document.getElementById('actions');a.innerHTML='';let b=document.createElement('button');b.className='primary';b.textContent='Open surprise 💌';b.onclick=proposal;let r=document.createElement('button');r.className='secondary';r.textContent='Play again ↻';r.onclick=start;a.append(b,r);document.getElementById('overlay').classList.add('show')}
+function proposal(){document.getElementById('emoji').textContent='🌹';document.getElementById('title').textContent='Maha ❤️';document.getElementById('text').textContent='“Unna impress panna game create panninen… aana un smile dhaan enakku biggest reward. Will you give my love a chance?” 💗';let a=document.getElementById('actions');a.innerHTML='';let y=document.createElement('button');y.className='primary';y.textContent='Yes 💞';y.onclick=()=>{document.getElementById('emoji').textContent='🥹💖';document.getElementById('title').textContent='A beautiful beginning!';document.getElementById('text').textContent='Indha cute moment-a memory-ah save pannikkalaam. I’m happy you gave this a chance!';a.innerHTML=''};let n=document.createElement('button');n.className='secondary';n.textContent='I need time 🌷';n.onclick=()=>{document.getElementById('text').textContent='No pressure. Un feelings-ku full respect irukku. Ready aana appo sollu. 💗';a.innerHTML=''};a.append(y,n)}
+function loop(t){let dt=Math.min((t-last)/16.67||1,2);last=t;if(running){if(Math.random()<.045)items.push({t:'h',x:W+5,y:ground-50-Math.random()*95});if(Math.random()<.015)items.push({t:'o',x:W+5,y:ground-20});items.forEach(i=>i.x-=3*dt);items=items.filter(i=>i.x>-30);boy.y+=boy.vy*dt;boy.vy+=.55*dt;if(boy.y>=ground-boy.h){boy.y=ground-boy.h;boy.vy=0;boy.jump=false}items.forEach(i=>{if(!i.hit&&boy.x+boy.w>i.x&&boy.x<i.x+24&&boy.y+boy.h>i.y-8&&boy.y<i.y+25){i.hit=true;if(i.t==='h'){score++;document.getElementById('score').textContent=score;for(let z=0;z<7;z++)sparks.push({x:i.x,y:i.y,life:20,dx:Math.random()*4-2,dy:-Math.random()*4})}else boy.x=Math.max(5,boy.x-14)}});items=items.filter(i=>!i.hit);sparks.forEach(s=>{s.x+=s.dx;s.y+=s.dy;s.life--});sparks=sparks.filter(s=>s.life>0);goal.x-=.55*dt;if(goal.x<boy.x+45)finish();if(keys.ArrowLeft)boy.x=Math.max(4,boy.x-4*dt);if(keys.ArrowRight)boy.x=Math.min(W-40,boy.x+4*dt)}draw();requestAnimationFrame(loop)}
+document.getElementById('start').onclick=start;document.getElementById('left').onclick=()=>boy.x=Math.max(4,boy.x-25);document.getElementById('right').onclick=()=>boy.x=Math.min(W-40,boy.x+25);document.getElementById('jump').onclick=jump;window.addEventListener('keydown',e=>{keys[e.key]=true;if(['ArrowLeft','ArrowRight','ArrowUp',' '].includes(e.key))e.preventDefault();if(e.key==='ArrowUp'||e.key===' ')jump()});window.addEventListener('keyup',e=>keys[e.key]=false);requestAnimationFrame(loop);
+</script></body></html>
